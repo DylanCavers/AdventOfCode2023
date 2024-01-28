@@ -3,9 +3,9 @@
 use std::env;
 
 mod day1;
-
 mod day2;
-use day2::day2part2;
+mod day3;
+use day3::day3;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -14,5 +14,5 @@ fn main() {
 
     println!("Running with input file: {}", file_path);
 
-    let _ = day2part2(file_path);
+    let _ = day3(file_path);
 }
