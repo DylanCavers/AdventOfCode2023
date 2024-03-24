@@ -1,4 +1,4 @@
-use std::{fs::File, io::{self, Read}, ops::Range};
+use std::{io::{self}, ops::Range, fs::read_to_string};
 
 #[derive(Default, Debug, PartialEq)]
 pub struct Day5 {
@@ -36,36 +36,40 @@ impl Mapping {
         }
         input
     }
+
+    fn reverse_lookup(&self, input: i64) -> i64 {
+        for map in &self.map {
+            let rev = input - map.delta;
+            if map.range.contains(&rev) {
+                return rev;
+            }
+        }
+        input
+    }
 }
 
 pub fn day5(file_path: &String) -> io::Result<()> {
-    let mut file = match File::open(file_path) {
-        Ok(file) => file,
-        Err(_) => panic!("Failed to open file."),
-    };
-    let mut contents = String::new();
-    if let Err(_) = file.read_to_string(&mut contents) {
-        panic!("Failed to read file.");
-    }
-    let contents_str: &str = &contents;
-
-    // Part 1
-    let parsed = parse(contents_str.lines().map(String::from).collect()); 
+    let contents_str = read_to_string(file_path)
+        .expect("unable to open file")
+        .split("\r\n")
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect();
+    let parsed = parse(contents_str);
     part1(&parsed);
+    part2(&parsed);
 
     Ok(())
 }
 
-
 pub fn parse(input: Vec<String>) -> Day5 {
     let seeds_ = input[0].split_once(": ").unwrap().1;
     let seeds_list: Vec<i64> = seeds_.split(' ').map(|x| x.parse().unwrap()).collect();
-    //println!("{:?}", seeds_list);
 
     let mut mapping: Vec<Mapping> = Vec::new();
 
     let mut curmap = Mapping::default();
-    for line in input[3..].iter() {
+    for line in input[2..].iter() {
         if line.is_empty() {
             continue;
         }
@@ -98,4 +102,42 @@ fn part1(data: &Day5) {
         min = min.min(cur);
     }
     println!("Part 1: {}", min);
+}
+
+fn part2(data: &Day5) {
+    // let mut min = i64::MAX;
+
+    //for seed_range in data.seeds.chunks(2) {
+    //    for seed in seed_range[0]..seed_range[0] + seed_range[1] {
+    //        let mut cur = seed;
+    //        for map in &data.mapping {
+    //            cur = map.apply_mapping(cur);
+    //        }
+    //        min = min.min(cur);
+    //    }
+    //}
+
+    let seed_ranges = data.seeds
+    .chunks(2)
+    .map(|vec| Range {
+        start: vec[0],
+        end: vec[0] + vec[1],
+    }).collect::<Vec<_>>();
+
+    let mut location = 1_i64;
+    loop {
+        let mut cur = location;
+        for map in data.mapping.iter().rev() {
+            cur = map.reverse_lookup(cur);
+        }
+        for sr in &seed_ranges {
+            if sr.contains(&cur) { 
+                println!("Part 2: {}", location);
+                return;
+            }
+        }
+        location += 1;
+    }
+
+    // println!("Part 2: {}", min);
 }
